@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Resume Analyzer{% endblock %}
+
+{% block header %}
+<section class="page-header">
+    <div class="container text-center">
+        <h1 class="fw-bold">📄 Resume ATS Analyzer</h1>
+        <p class="lead mb-0">Check how well your resume matches the role you are applying for.</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="panel">
+            <h4 class="fw-bold mb-3">Your resume</h4>
+            <form id="resumeForm">
+                <div class="mb-3">
+                    <label class="form-label fw-bold" for="role">Target role</label>
+                    <input id="role" class="form-control" maxlength="100" value="{{ default_role }}" placeholder="e.g. Python Developer">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold" for="file">Upload PDF / TXT</label>
+                    <input id="file" type="file" class="form-control" accept=".pdf,.txt">
+                    <div class="form-text">Max 2 MB. Text-based PDFs only (not scanned images).</div>
+                </div>
+                <div class="text-center text-muted my-2">— or paste the text —</div>
+                <div class="mb-3">
+                    <textarea id="text" class="form-control" rows="8" placeholder="Paste your resume text here..."></textarea>
+                </div>
+                <button id="analyzeBtn" class="btn btn-primary btn-custom w-100" type="submit">Analyze Resume</button>
+                <div id="error" class="alert alert-danger mt-3" style="display:none;"></div>
+            </form>
+            <p class="small text-muted mt-3 mb-0">
+                Your resume text is analysed once and only the result is stored. {% if not ai_on %}(Offline mode: rule-based analysis.){% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="panel" id="resultPanel">
+            <div id="placeholder" class="text-center text-muted py-5">Your ATS score and suggestions will appear here.</div>
+            <div id="result" style="display:none;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const LAST = {{ last_result | tojson }};
+
+    function scoreClass(score) { return score >= 75 ? "bg-success" : (score >= 50 ? "bg-warning" : "bg-danger"); }
+
+    function chips(list, cls) {
+        const wrap = el("div", "mb-3");
+        if (!list || !list.length) { wrap.appendChild(el("span", "text-muted small", "None")); return wrap; }
+        list.forEach(k => wrap.appendChild(el("span", "chip " + cls, k)));
+        return wrap;
+    }
+
+    function render(r) {
+        $("placeholder").style.display = "none";
+        const box = $("result");
+        box.replaceChildren();
+        box.style.display = "block";
+
+        const head = el("div", "text-center mb-3");
+        head.appendChild(el("div", "text-muted", "ATS score" + (r.role ? " for " + r.role : "")));
+        head.appendChild(el("div", "display-3 fw-bold", r.ats_score + " / 100"));
+        const bar = el("div", "progress mx-auto"); bar.style.maxWidth = "320px"; bar.style.height = "12px";
+        const fill = el("div", "progress-bar " + scoreClass(r.ats_score)); fill.style.width = r.ats_score + "%";
+        bar.appendChild(fill); head.appendChild(bar);
+        head.appendChild(el("span", "badge mt-2 " + (r.source === "ai" ? "text-bg-primary" : "text-bg-secondary"),
+                            r.source === "ai" ? "AI analysis" : "Offline rule-based analysis"));
+        box.appendChild(head);
+        box.appendChild(el("p", "", r.summary));
+
+        if (r.strengths && r.strengths.length) box.appendChild(listBlock("What is good", r.strengths, "✅"));
+        if (r.improvements && r.improvements.length) {
+            const gap = listBlock("What to improve", r.improvements, "🔧"); gap.classList.add("mt-3"); box.appendChild(gap);
+        }
+
+        box.appendChild(el("div", "fw-bold mt-3 mb-1", "Keywords found"));
+        box.appendChild(chips(r.matched_keywords, "chip-ok"));
+        box.appendChild(el("div", "fw-bold mb-1", "Keywords missing"));
+        box.appendChild(chips(r.missing_keywords, "chip-miss"));
+
+        if (r.sections) {
+            box.appendChild(el("div", "fw-bold mb-1", "Resume checklist"));
+            const ul = el("ul", "list-unstyled mb-0");
+            Object.entries(r.sections).forEach(([name, ok]) => ul.appendChild(el("li", "", (ok ? "✅ " : "❌ ") + name)));
+            box.appendChild(ul);
+        }
+        if (r.word_count) box.appendChild(el("div", "small text-muted mt-3", "Length: " + r.word_count + " words"));
+    }
+
+    if (LAST) render(LAST);
+
+    $("resumeForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        $("error").style.display = "none";
+        const form = new FormData();
+        form.append("role", $("role").value);
+        form.append("text", $("text").value);
+        if ($("file").files[0]) form.append("file", $("file").files[0]);
+
+        $("analyzeBtn").disabled = true;
+        $("analyzeBtn").textContent = "Analyzing...";
+        try {
+            const result = await api("/api/resume/analyze", form, true);
+            result.role = $("role").value.trim();
+            render(result);
+        } catch (error) {
+            $("error").textContent = error.message;
+            $("error").style.display = "block";
+        } finally {
+            $("analyzeBtn").disabled = false;
+            $("analyzeBtn").textContent = "Analyze Resume";
+        }
+    });
+</script>
+{% endblock %}

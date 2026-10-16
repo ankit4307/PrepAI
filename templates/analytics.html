@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+
+{% block header %}
+<section class="page-header">
+    <div class="container text-center">
+        <h1 class="fw-bold">📊 My Analytics</h1>
+        <p class="lead mb-0">See how your interview performance changes over time.</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div id="empty" class="panel text-center py-5" style="display:none;">
+    <h4 class="fw-bold">No data yet</h4>
+    <p class="text-muted">Finish a mock interview to see your charts.</p>
+    <a href="{{ url_for('mock_interview') }}" class="btn btn-primary btn-custom">Start Mock Interview</a>
+</div>
+
+<div id="content" style="display:none;">
+    <div class="row g-4 mb-4 text-center">
+        <div class="col-6 col-md-3"><div class="dashboard-card"><div class="stat-number" id="sTotal">–</div><div class="text-muted">Interviews</div></div></div>
+        <div class="col-6 col-md-3"><div class="dashboard-card"><div class="stat-number" id="sAvg">–</div><div class="text-muted">Average score</div></div></div>
+        <div class="col-6 col-md-3"><div class="dashboard-card"><div class="stat-number" id="sTrend">–</div><div class="text-muted">Recent vs earlier</div></div></div>
+        <div class="col-6 col-md-3"><div class="dashboard-card"><div class="stat-number" id="sMin">–</div><div class="text-muted">Minutes practised · 🔥<span id="sStreak">0</span>d</div></div></div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8"><div class="panel"><h5 class="fw-bold">Score trend</h5><div style="position:relative;height:280px"><canvas id="trendChart"></canvas></div></div></div>
+        <div class="col-lg-4"><div class="panel"><h5 class="fw-bold">Average by type</h5><div style="position:relative;height:280px"><canvas id="typeChart"></canvas></div></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="panel">
+                <h5 class="fw-bold mb-3">Weakest answers - practise these first</h5>
+                <div id="weakList"></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="panel"><h5 class="fw-bold">Resume ATS score history</h5>
+                <div id="resumeWrap" style="position:relative;height:220px"><canvas id="resumeChart"></canvas></div>
+                <div id="noResume" class="text-muted small" style="display:none;">No resume analysed yet. <a href="{{ url_for('resume_page') }}">Analyze now</a></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(async function () {
+    const res = await fetch("/api/analytics");
+    if (!res.ok) { window.location = "{{ url_for('login') }}"; return; }
+    const d = await res.json();
+    if (!d.total) { $("empty").style.display = "block"; return; }
+    $("content").style.display = "block";
+
+    $("sTotal").textContent = d.total;
+    $("sAvg").textContent = d.average !== null ? d.average + "/10" : "–";
+    $("sTrend").textContent = d.trend === null ? "–" : (d.trend > 0 ? "▲ +" : (d.trend < 0 ? "▼ " : "")) + d.trend;
+    $("sTrend").style.color = d.trend === null ? "" : (d.trend >= 0 ? "#198754" : "#dc3545");
+    $("sMin").textContent = d.practice_minutes;
+    $("sStreak").textContent = d.streak;
+
+    const blue = "#0d6efd";
+    new Chart($("trendChart"), {
+        type: "line",
+        data: { labels: d.timeline.map((t, i) => "#" + (i + 1) + " " + t.type),
+                datasets: [{ label: "Average score", data: d.timeline.map(t => t.score), borderColor: blue,
+                             backgroundColor: "rgba(13,110,253,.12)", fill: true, tension: .3, pointRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 10 } }, plugins: { legend: { display: false } } }
+    });
+
+    const types = Object.keys(d.by_type);
+    new Chart($("typeChart"), {
+        type: "bar",
+        data: { labels: types, datasets: [{ data: types.map(t => d.by_type[t]),
+                backgroundColor: ["#0d6efd", "#20c997", "#fd7e14"] }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 10 } }, plugins: { legend: { display: false } } }
+    });
+
+    if (d.resume.length) {
+        new Chart($("resumeChart"), {
+            type: "line",
+            data: { labels: d.resume.map(r => r.date), datasets: [{ data: d.resume.map(r => r.score),
+                    borderColor: "#20c997", backgroundColor: "rgba(32,201,151,.15)", fill: true, tension: .3 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } }, plugins: { legend: { display: false } } }
+        });
+    } else { $("resumeWrap").style.display = "none"; $("noResume").style.display = "block"; }
+
+    const list = $("weakList");
+    d.weak.forEach(w => {
+        const item = el("div", "result-item");
+        const row = el("div", "d-flex justify-content-between gap-3");
+        row.appendChild(el("div", "fw-bold", w.question));
+        row.appendChild(el("div", "fw-bold text-danger text-nowrap", w.score + "/10"));
+        item.appendChild(row);
+        if (w.tip) item.appendChild(el("div", "small text-muted mt-1", "🔧 " + w.tip));
+        list.appendChild(item);
+    });
+})();
+</script>
+{% endblock %}

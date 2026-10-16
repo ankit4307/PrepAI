@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>HR Interview | PrepAI</title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+
+        body {
+            background: #f5f7fb;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Navbar */
+
+        .navbar {
+            background: #0d6efd;
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Header */
+
+        .page-header {
+            background: linear-gradient(135deg, #0d6efd, #084298);
+            color: white;
+            padding: 50px 20px;
+            border-radius: 0 0 25px 25px;
+        }
+
+        /* Question Card */
+
+        .question-card {
+            background: white;
+            border: none;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .question-number {
+            width: 40px;
+            height: 40px;
+            background: #e7f0ff;
+            color: #0d6efd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-left: 15px;
+        }
+
+        .category-badge {
+            display: inline-block;
+            background: #e7f0ff;
+            color: #0d6efd;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        .answer-box {
+            margin-top: 20px;
+            padding: 18px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .show-answer {
+            margin-top: 15px;
+        }
+
+        .back-btn {
+            margin-top: 20px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     NAVBAR
+     ========================= -->
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+
+    <div class="container">
+
+        <a class="navbar-brand" href="/dashboard">
+
+            <i class="bi bi-robot"></i>
+            PrepAI
+
+        </a>
+
+
+        <div>
+
+            <a
+                href="/dashboard"
+                class="btn btn-light btn-sm me-2">
+
+                <i class="bi bi-speedometer2"></i>
+
+                Dashboard
+
+            </a>
+
+
+            <a
+                href="/logout"
+                class="btn btn-outline-light btn-sm">
+
+                Logout
+
+            </a>
+
+        </div>
+
+    </div>
+
+</nav>
+
+
+
+<!-- =========================
+     PAGE HEADER
+     ========================= -->
+
+<section class="page-header">
+
+    <div class="container">
+
+        <h1 class="fw-bold">
+
+            HR Interview Preparation
+
+        </h1>
+
+        <p class="lead mb-0">
+
+            Practice common HR questions and
+            prepare confident answers for your interview.
+
+        </p>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     QUESTIONS
+     ========================= -->
+
+<div class="container py-5">
+
+    <div class="row">
+
+        <div class="col-lg-8 mx-auto">
+
+
+            <!-- QUESTION 1 -->
+
+            <div class="question-card">
+
+                <div class="d-flex align-items-center">
+
+                    <div class="question-number">
+                        1
+                    </div>
+
+                    <div class="question-text">
+
+                        Tell me about yourself.
+
+                    </div>
+
+                </div>
+
+
+                <span class="category-badge">
+
+                    Introduction
+
+                </span>
+
+
+                <button
+                    class="btn btn-outline-primary show-answer"
+                    onclick="showAnswer(1)">
+
+                    <i class="bi bi-eye"></i>
+
+                    Show Sample Answer
+
+                </button>
+
+
+                <div
+                    id="answer1"
+                    class="answer-box">
+
+                    <strong>Sample Answer:</strong>
+
+                    <p class="mt-2">
+
+                        "My name is [Your Name]. I am currently
+                        pursuing my B.Tech in Computer Science.
+                        I have developed skills in Python,
+                        Data Science, Machine Learning and
+                        web development. I have also worked
+                        on academic projects that helped me
+                        improve my technical and problem-solving
+                        skills. I am looking for an opportunity
+                        where I can apply my knowledge, learn
+                        from experienced professionals and
+                        contribute to the organization."
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- QUESTION 2 -->
+
+            <div class="question-card">
+
+                <div class="d-flex align-items-center">
+
+                    <div class="question-number">
+                        2
+                    </div>
+
+                    <div class="question-text">
+
+                        Why should we hire you?
+
+                    </div>
+
+                </div>
+
+
+                <span class="category-badge">
+
+                    HR
+
+                </span>
+
+
+                <button
+                    class="btn btn-outline-primary show-answer"
+                    onclick="showAnswer(2)">
+
+                    <i class="bi bi-eye"></i>
+
+                    Show Sample Answer
+
+                </button>
+
+
+                <div
+                    id="answer2"
+                    class="answer-box">
+
+                    <strong>Sample Answer:</strong>
+
+                    <p class="mt-2">
+
+                        "I believe you should hire me because
+                        I am a quick learner, hardworking and
+                        willing to take responsibility. I have
+                        a strong interest in technology and
+                        continuously work on improving my
+                        technical skills. I can adapt to new
+                        environments and work effectively
+                        as part of a team."
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- QUESTION 3 -->
+
+            <div class="question-card">
+
+                <div class="d-flex align-items-center">
+
+                    <div class="question-number">
+                        3
+                    </div>
+
+                    <div class="question-text">
+
+                        What are your strengths?
+
+                    </div>
+
+                </div>
+
+
+                <span class="category-badge">
+
+                    Personality
+
+                </span>
+
+
+                <button
+                    class="btn btn-outline-primary show-answer"
+                    onclick="showAnswer(3)">
+
+                    <i class="bi bi-eye"></i>
+
+                    Show Sample Answer
+
+                </button>
+
+
+                <div
+                    id="answer3"
+                    class="answer-box">
+
+                    <strong>Sample Answer:</strong>
+
+                    <p class="mt-2">
+
+                        "My main strengths are problem-solving,
+                        analytical thinking, communication and
+                        willingness to learn. When I face a
+                        difficult problem, I try to understand
+                        it step by step and find a practical
+                        solution."
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- QUESTION 4 -->
+
+            <div class="question-card">
+
+                <div class="d-flex align-items-center">
+
+                    <div class="question-number">
+                        4
+                    </div>
+
+                    <div class="question-text">
+
+                        What is your biggest weakness?
+
+                    </div>
+
+                </div>
+
+
+                <span class="category-badge">
+
+                    Personality
+
+                </span>
+
+
+                <button
+                    class="btn btn-outline-primary show-answer"
+                    onclick="showAnswer(4)">
+
+                    <i class="bi bi-eye"></i>
+
+                    Show Sample Answer
+
+                </button>
+
+
+                <div
+                    id="answer4"
+                    class="answer-box">
+
+                    <strong>Sample Answer:</strong>
+
+                    <p class="mt-2">
+
+                        "One area I am working on is that
+                        sometimes I spend extra time making
+                        sure my work is accurate. I am improving
+                        this by setting priorities and managing
+                        my time more effectively."
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- QUESTION 5 -->
+
+            <div class="question-card">
+
+                <div class="d-flex align-items-center">
+
+                    <div class="question-number">
+                        5
+                    </div>
+
+                    <div class="question-text">
+
+                        Where do you see yourself in five years?
+
+                    </div>
+
+                </div>
+
+
+                <span class="category-badge">
+
+                    Career Goals
+
+                </span>
+
+
+                <button
+                    class="btn btn-outline-primary show-answer"
+                    onclick="showAnswer(5)">
+
+                    <i class="bi bi-eye"></i>
+
+                    Show Sample Answer
+
+                </button>
+
+
+                <div
+                    id="answer5"
+                    class="answer-box">
+
+                    <strong>Sample Answer:</strong>
+
+                    <p class="mt-2">
+
+                        "In five years, I want to see myself
+                        as a skilled professional with strong
+                        technical and problem-solving abilities.
+                        I want to take on greater responsibilities,
+                        contribute to important projects and
+                        continue growing with the organization."
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- QUESTION 6 -->
+
+            <div class="question-card">
+
+                <div class="d-flex align-items-center">
+
+                    <div class="question-number">
+                        6
+                    </div>
+
+                    <div class="question-text">
+
+                        Why do you want to join our company?
+
+                    </div>
+
+                </div>
+
+
+                <span class="category-badge">
+
+                    Company
+
+                </span>
+
+
+                <button
+                    class="btn btn-outline-primary show-answer"
+                    onclick="showAnswer(6)">
+
+                    <i class="bi bi-eye"></i>
+
+                    Show Sample Answer
+
+                </button>
+
+
+                <div
+                    id="answer6"
+                    class="answer-box">
+
+                    <strong>Sample Answer:</strong>
+
+                    <p class="mt-2">
+
+                        "I want to join your company because
+                        it provides an environment where I can
+                        learn, improve my professional skills
+                        and contribute to real-world projects.
+                        I am particularly interested in the
+                        opportunities for growth and learning
+                        within the organization."
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- QUESTION 7 -->
+
+            <div class="question-card">
+
+                <div class="d-flex align-items-center">
+
+                    <div class="question-number">
+                        7
+                    </div>
+
+                    <div class="question-text">
+
+                        Are you comfortable working in a team?
+
+                    </div>
+
+                </div>
+
+
+                <span class="category-badge">
+
+                    Teamwork
+
+                </span>
+
+
+                <button
+                    class="btn btn-outline-primary show-answer"
+                    onclick="showAnswer(7)">
+
+                    <i class="bi bi-eye"></i>
+
+                    Show Sample Answer
+
+                </button>
+
+
+                <div
+                    id="answer7"
+                    class="answer-box">
+
+                    <strong>Sample Answer:</strong>
+
+                    <p class="mt-2">
+
+                        "Yes, I am comfortable working in a team.
+                        I believe teamwork helps people combine
+                        different ideas and solve problems more
+                        effectively. I also make sure to communicate
+                        clearly and respect the ideas of other
+                        team members."
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- BACK BUTTON -->
+
+            <div class="text-center back-btn">
+
+                <a
+                    href="/dashboard"
+                    class="btn btn-primary">
+
+                    <i class="bi bi-arrow-left"></i>
+
+                    Back to Dashboard
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================
+     JAVASCRIPT
+     ========================= -->
+
+<script>
+
+function showAnswer(number) {
+
+    const answer =
+        document.getElementById("answer" + number);
+
+    if (answer.style.display === "block") {
+
+        answer.style.display = "none";
+
+    } else {
+
+        answer.style.display = "block";
+
+    }
+
+}
+
+</script>
+
+
+</body>
+
+</html>

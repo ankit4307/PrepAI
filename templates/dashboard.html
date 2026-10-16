@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block header %}
+<section class="page-header">
+    <div class="container">
+        <h1 class="fw-bold">Welcome, {{ user_name }}! 👋</h1>
+        <p class="lead mb-0">Ready to improve your interview skills and prepare for your dream job?</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+{% if not ai_on %}
+<div class="alert alert-info">
+    <strong>Offline mode:</strong> no <code>GEMINI_API_KEY</code> is configured, so answers are scored by the
+    built-in rule-based evaluator. Add a key in <code>.env</code> to enable full AI feedback.
+</div>
+{% endif %}
+
+<div class="row g-4 mb-5 text-center">
+    <div class="col-6 col-md-3 col-lg">
+        <div class="dashboard-card"><div class="stat-number">{{ total_sessions }}</div><div class="text-muted">Mock interviews</div></div>
+    </div>
+    <div class="col-6 col-md-3 col-lg">
+        <div class="dashboard-card"><div class="stat-number">{{ avg_score if avg_score is not none else '–' }}<small class="fs-6">/10</small></div><div class="text-muted">Average score</div></div>
+    </div>
+    <div class="col-6 col-md-3 col-lg">
+        <div class="dashboard-card"><div class="stat-number">{{ best_score if best_score is not none else '–' }}<small class="fs-6">/10</small></div><div class="text-muted">Best score</div></div>
+    </div>
+    <div class="col-6 col-md-3 col-lg">
+        <div class="dashboard-card"><div class="stat-number">🔥 {{ streak }}</div><div class="text-muted">Day streak</div></div>
+    </div>
+    <div class="col-12 col-lg">
+        <div class="dashboard-card">
+            <div class="stat-number">{{ profile_completeness }}%</div>
+            <div class="text-muted">Profile complete</div>
+            {% if profile_completeness < 100 %}<a href="{{ url_for('profile') }}" class="small">Complete it for better questions</a>{% endif %}
+        </div>
+    </div>
+</div>
+
+<h3 class="fw-bold text-center mb-4">Prepare</h3>
+<div class="row g-4 mb-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card text-center">
+            <div class="fs-1">🤖</div><h4>AI Mock Interview</h4>
+            <p class="text-muted">Personalised questions, voice answers, timer and instant feedback on every answer.</p>
+            <a href="{{ url_for('mock_interview') }}" class="btn btn-primary btn-custom">Start Mock Interview</a>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card text-center">
+            <div class="fs-1">📄</div><h4>Resume Analyzer</h4>
+            <p class="text-muted">Upload your resume and get an ATS score, missing keywords and fixes.
+                {% if resume_score is not none %}<br><strong>Last score: {{ resume_score }}/100</strong>{% endif %}</p>
+            <a href="{{ url_for('resume_page') }}" class="btn btn-primary btn-custom">Analyze Resume</a>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card text-center">
+            <div class="fs-1">📊</div><h4>Analytics</h4>
+            <p class="text-muted">Score trend, weak areas and practice streak across all your interviews.</p>
+            <a href="{{ url_for('analytics') }}" class="btn btn-primary btn-custom">View Analytics</a>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card text-center">
+            <div class="fs-1">💻</div><h4>Technical Questions</h4>
+            <p class="text-muted">Practice core computer-science questions with model answers.</p>
+            <a href="{{ url_for('technical') }}" class="btn btn-outline-primary btn-custom">Start Practice</a>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card text-center">
+            <div class="fs-1">🗣️</div><h4>HR Questions</h4>
+            <p class="text-muted">Practice common HR and behavioural questions.</p>
+            <a href="{{ url_for('hr') }}" class="btn btn-outline-primary btn-custom">Start Practice</a>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="dashboard-card text-center">
+            <div class="fs-1">📈</div><h4>Interview History</h4>
+            <p class="text-muted">Review past interviews and download a PDF report of each one.</p>
+            <a href="{{ url_for('history') }}" class="btn btn-outline-primary btn-custom">View History</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

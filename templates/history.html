@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block header %}
+<section class="page-header">
+        <div class="container text-center">
+            <h1 class="fw-bold">📈 My Interview History</h1>
+            <p class="lead mb-0">Track your scores and review the AI feedback.</p>
+        </div>
+    </section>
+{% endblock %}
+{% block content %}
+
+
+    
+
+        {% if not sessions %}
+        <div class="panel text-center py-5">
+            <h4 class="fw-bold">No interviews yet</h4>
+            <p class="text-muted">Finish your first AI mock interview and it will show up here.</p>
+            <a href="{{ url_for('mock_interview') }}" class="btn btn-primary">Start Mock Interview</a>
+        </div>
+        {% else %}
+
+        <div class="row g-4">
+
+            <!-- SESSION LIST -->
+            <div class="col-lg-4">
+                <div class="panel">
+                    <h5 class="fw-bold mb-3">Your sessions</h5>
+                    {% for s in sessions %}
+                    <a class="session-link {% if detail and detail.session['id'] == s['id'] %}active{% endif %}"
+                       href="{{ url_for('history', session=s['id']) }}">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ s['interview_type'] }}</strong>
+                            <span class="fw-bold text-primary">
+                                {{ s['average_score'] if s['average_score'] is not none else '–' }}/10
+                            </span>
+                        </div>
+                        <div class="small text-muted">
+                            {{ s['role'] or 'No role set' }}{% if s['difficulty'] %} · {{ s['difficulty'] }}{% endif %} · {{ s['created_at'] }}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- SESSION DETAIL -->
+            <div class="col-lg-8">
+                <div class="panel">
+                    {% if detail %}
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                    <h5 class="fw-bold mb-1">
+                        {{ detail.session['interview_type'] }} interview
+                        {% if detail.session['role'] %}— {{ detail.session['role'] }}{% endif %}
+                    </h5>
+                    <a class="btn btn-sm btn-outline-primary text-nowrap" href="{{ url_for('session_report', session_id=detail.session['id']) }}">⬇ PDF report</a>
+                    </div>
+                    <p class="text-muted">
+                        {{ detail.session['created_at'] }} ·{% if detail.session['difficulty'] %} {{ detail.session['difficulty'] }} ·{% endif %}{% if detail.session['total_time_sec'] %} {{ (detail.session['total_time_sec'] // 60) }}m {{ detail.session['total_time_sec'] % 60 }}s ·{% endif %}
+                        Average score: <strong>{{ detail.session['average_score'] if detail.session['average_score'] is not none else '–' }}/10</strong>
+                    </p>
+
+                    {% for a in detail.answers %}
+                    <div class="result-item">
+                        <div class="d-flex justify-content-between gap-3">
+                            <div class="fw-bold">Q{{ loop.index }}. {{ a.question }}</div>
+                            <div class="fw-bold text-primary text-nowrap">
+                                {{ a.score if a.score is not none else '–' }}/10
+                            </div>
+                        </div>
+                        <div class="small text-muted my-2"><strong>Your answer:</strong> {{ a.answer }}</div>
+                        {% if a.feedback.get('source') == 'offline' %}<span class="badge text-bg-secondary mb-2">Offline evaluation</span>{% endif %}
+                        {% if a.feedback.get('fillers') %}<span class="badge text-bg-warning mb-2">{{ a.feedback['fillers'] }} filler word(s)</span>{% endif %}
+
+                        {% if a.feedback.get('strengths') %}
+                        <div class="fw-bold">What was good</div>
+                        <ul>{% for item in a.feedback['strengths'] %}<li>✅ {{ item }}</li>{% endfor %}</ul>
+                        {% endif %}
+
+                        {% if a.feedback.get('improvements') %}
+                        <div class="fw-bold">What to improve</div>
+                        <ul>{% for item in a.feedback['improvements'] %}<li>🔧 {{ item }}</li>{% endfor %}</ul>
+                        {% endif %}
+
+                        {% if a.feedback.get('sample_answer') %}
+                        <div class="sample-answer"><strong>💡 Better sample answer:</strong> {{ a.feedback['sample_answer'] }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        Select a session on the left to see the questions, your answers and AI feedback.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+        {% endif %}
+    
+{% endblock %}

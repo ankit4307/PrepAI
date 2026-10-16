@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% block title %}AI Mock Interview{% endblock %}
+
+{% block head %}
+<style>
+    .question-box { background: #f1f5ff; border-left: 5px solid #0d6efd; padding: 20px; border-radius: 10px; }
+    .question-number { color: #0d6efd; font-weight: bold; }
+    textarea { resize: vertical; min-height: 150px; }
+    .progress { height: 10px; border-radius: 10px; }
+    .timer { font-variant-numeric: tabular-nums; font-weight: 700; }
+    .mic-on { animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220,53,69,.6); } 100% { box-shadow: 0 0 0 12px rgba(220,53,69,0); } }
+</style>
+{% endblock %}
+
+{% block header %}
+<section class="page-header">
+    <div class="container text-center">
+        <h1 class="fw-bold">🤖 AI Mock Interview</h1>
+        <p class="lead mb-0">Personalised questions from your profile, with feedback on every answer.</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+
+        <!-- STEP 1: SETUP -->
+        <div class="panel" id="setupPanel">
+            <h4 class="fw-bold mb-4">Set up your interview</h4>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="interviewType" class="form-label fw-bold">Interview Type</label>
+                    <select id="interviewType" class="form-select">
+                        <option value="Technical">Technical Interview</option>
+                        <option value="HR">HR Interview</option>
+                        <option value="Mixed">Mixed Interview</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="difficulty" class="form-label fw-bold">Difficulty</label>
+                    <select id="difficulty" class="form-select">
+                        <option>Easy</option>
+                        <option selected>Medium</option>
+                        <option>Hard</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="role" class="form-label fw-bold">Target Role</label>
+                <input id="role" type="text" maxlength="100" class="form-control"
+                       value="{{ default_role }}" placeholder="e.g. Python Developer">
+                <div class="form-text">
+                    Questions are generated from this role and the skills/projects in your
+                    <a href="{{ url_for('profile') }}">profile</a>.
+                </div>
+            </div>
+            <button id="startBtn" class="btn btn-primary btn-custom">Start Interview →</button>
+            <div id="setupError" class="alert alert-danger mt-3" style="display:none;"></div>
+        </div>
+
+        <!-- STEP 2: INTERVIEW -->
+        <div class="panel" id="interviewPanel" style="display:none;">
+            <div class="mb-4">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-bold">Interview Progress</span>
+                    <span><span id="progressText">Question 1 of 5</span> · ⏱ <span id="timer" class="timer">0:00</span></span>
+                </div>
+                <div class="progress"><div id="progressBar" class="progress-bar" role="progressbar" style="width: 20%;"></div></div>
+            </div>
+            <div id="sourceNote" class="small text-muted mb-3"></div>
+
+            <div class="question-box mb-4">
+                <div class="question-number mb-2" id="questionNumber">Question 1</div>
+                <h4 id="questionText"></h4>
+            </div>
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="answer" class="form-label fw-bold mb-0">Your Answer</label>
+                    <button id="micBtn" type="button" class="btn btn-sm btn-outline-danger" style="display:none;">🎤 Speak your answer</button>
+                </div>
+                <textarea id="answer" class="form-control" maxlength="3000" placeholder="Type or speak your answer here..."></textarea>
+                <div class="form-text d-flex justify-content-between">
+                    <span id="micStatus"></span>
+                    <span><span id="charCount">0</span> / 3000</span>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button id="previousBtn" class="btn btn-outline-secondary btn-custom" disabled>← Previous</button>
+                <button id="nextBtn" class="btn btn-primary btn-custom">Next →</button>
+            </div>
+            <div id="answerError" class="text-danger mt-3" style="display:none;"></div>
+        </div>
+
+        <!-- STEP 3: RESULTS -->
+        <div class="panel" id="resultsPanel" style="display:none;">
+            <div id="evalStatus" class="text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <div id="evalStatusText" class="fw-bold">Evaluating your answers...</div>
+            </div>
+            <div id="resultsBody" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="panel">
+            <h4 class="fw-bold mb-4">💡 Interview Tips</h4>
+            <div class="mb-3"><strong>1. Be Clear</strong><p class="text-muted mb-0">Give direct, easy-to-understand answers.</p></div>
+            <div class="mb-3"><strong>2. Give Examples</strong><p class="text-muted mb-0">Use a practical example from a project.</p></div>
+            <div class="mb-3"><strong>3. Use STAR</strong><p class="text-muted mb-0">Situation, Task, Action, Result - for HR questions.</p></div>
+            <div class="mb-3"><strong>4. Avoid fillers</strong><p class="text-muted mb-0">Words like "um", "basically", "actually" are counted in your report.</p></div>
+            <div><strong>5. Stay Relevant</strong><p class="text-muted mb-0">Focus on the question being asked.</p></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showOnly(panelId) {
+        ["setupPanel", "interviewPanel", "resultsPanel"].forEach(id => {
+            $(id).style.display = (id === panelId) ? "block" : "none";
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // ---------- state ----------
+    let questions = [], answers = [], times = [];
+    let current = 0, interviewType = "Technical", difficulty = "Medium", role = "";
+    let questionStart = 0, timerHandle = null;
+
+    // ---------- timer ----------
+    function startTimer() {
+        questionStart = Date.now();
+        clearInterval(timerHandle);
+        timerHandle = setInterval(renderTimer, 500);
+        renderTimer();
+    }
+    function elapsed() { return Math.round((Date.now() - questionStart) / 1000); }
+    function renderTimer() {
+        const s = elapsed() + (times[current] || 0);
+        $("timer").textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    }
+    function stopTimerInto(index) {
+        times[index] = (times[index] || 0) + elapsed();
+        clearInterval(timerHandle);
+    }
+
+    // ---------- voice input (Web Speech API) ----------
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null, listening = false;
+    if (SpeechRec) {
+        $("micBtn").style.display = "inline-block";
+        recognition = new SpeechRec();
+        recognition.lang = "en-IN";
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.onresult = (event) => {
+            let text = "";
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) text += event.results[i][0].transcript + " ";
+            }
+            const box = $("answer");
+            box.value = (box.value + (box.value && !box.value.endsWith(" ") ? " " : "") + text).slice(0, 3000);
+            $("charCount").textContent = box.value.length;
+        };
+        recognition.onend = () => { if (listening) { try { recognition.start(); } catch (e) {} } };
+        recognition.onerror = (e) => { $("micStatus").textContent = "Microphone error: " + e.error; stopListening(); };
+    }
+    function stopListening() {
+        listening = false;
+        $("micBtn").classList.remove("mic-on");
+        $("micBtn").textContent = "🎤 Speak your answer";
+        if (recognition) { try { recognition.stop(); } catch (e) {} }
+    }
+    $("micBtn").addEventListener("click", () => {
+        if (listening) { stopListening(); $("micStatus").textContent = ""; return; }
+        listening = true;
+        $("micBtn").classList.add("mic-on");
+        $("micBtn").textContent = "⏹ Stop";
+        $("micStatus").textContent = "Listening... speak clearly.";
+        try { recognition.start(); } catch (e) {}
+    });
+
+    // ---------- step 1: start ----------
+    $("startBtn").addEventListener("click", async () => {
+        interviewType = $("interviewType").value;
+        difficulty = $("difficulty").value;
+        role = $("role").value.trim();
+
+        $("setupError").style.display = "none";
+        $("startBtn").disabled = true;
+        $("startBtn").textContent = "Generating your questions...";
+        try {
+            const data = await api("/api/generate-questions",
+                { interview_type: interviewType, role: role, difficulty: difficulty });
+            questions = data.questions;
+            answers = new Array(questions.length).fill("");
+            times = new Array(questions.length).fill(0);
+            current = 0;
+            $("sourceNote").textContent = data.personalized
+                ? "✨ Questions personalised by AI from your profile."
+                : "Using the built-in question bank" + ({{ 'true' if ai_on else 'false' }} ? " (AI was unavailable)." : " (offline mode).");
+            displayQuestion();
+            showOnly("interviewPanel");
+        } catch (error) {
+            $("setupError").textContent = error.message;
+            $("setupError").style.display = "block";
+        } finally {
+            $("startBtn").disabled = false;
+            $("startBtn").textContent = "Start Interview →";
+        }
+    });
+
+    // ---------- step 2: interview ----------
+    function displayQuestion() {
+        $("questionNumber").textContent = "Question " + (current + 1);
+        $("questionText").textContent = questions[current];
+        $("progressText").textContent = "Question " + (current + 1) + " of " + questions.length;
+        $("progressBar").style.width = ((current + 1) / questions.length * 100) + "%";
+        $("answer").value = answers[current] || "";
+        $("charCount").textContent = $("answer").value.length;
+        $("previousBtn").disabled = (current === 0);
+        $("nextBtn").textContent = (current === questions.length - 1) ? "Finish Interview ✓" : "Next →";
+        $("answerError").style.display = "none";
+        $("micStatus").textContent = "";
+        $("answer").focus();
+        startTimer();
+    }
+
+    $("answer").addEventListener("input", () => { $("charCount").textContent = $("answer").value.length; });
+
+    $("previousBtn").addEventListener("click", () => {
+        stopListening();
+        answers[current] = $("answer").value;
+        stopTimerInto(current);
+        if (current > 0) { current--; displayQuestion(); }
+    });
+
+    $("nextBtn").addEventListener("click", () => {
+        stopListening();
+        const text = $("answer").value.trim();
+        if (text.length < 10) {
+            $("answerError").textContent = "Please write at least a short answer (10+ characters) before continuing.";
+            $("answerError").style.display = "block";
+            return;
+        }
+        answers[current] = text;
+        stopTimerInto(current);
+        if (current < questions.length - 1) { current++; displayQuestion(); }
+        else { finishInterview(); }
+    });
+
+    // ---------- step 3: evaluate EVERY answer, show + save ----------
+    async function finishInterview() {
+        showOnly("resultsPanel");
+        $("evalStatus").style.display = "block";
+        $("resultsBody").style.display = "none";
+        $("evalStatusText").textContent = "Evaluating all " + questions.length + " answers... (up to 15 seconds)";
+
+        const items = questions.map((q, i) => ({ question: q, answer: answers[i] }));
+        let results = [];
+        try {
+            const data = await api("/api/evaluate-all", { items: items });
+            results = items.map((item, i) => {
+                const fb = data.results[i];
+                if (!fb || fb.error) {
+                    return { question: item.question, answer: item.answer, score: null, time_sec: times[i],
+                             error: (fb && fb.error) || "No feedback returned." };
+                }
+                return { question: item.question, answer: item.answer, score: fb.score, time_sec: times[i], feedback: fb };
+            });
+        } catch (batchError) {
+            results = items.map((item, i) => ({ question: item.question, answer: item.answer, score: null,
+                                                time_sec: times[i], error: batchError.message }));
+        }
+
+        let sessionId = null;
+        try {   // save first so we can offer the PDF report; results are shown either way
+            const saved = await api("/api/save-session",
+                { interview_type: interviewType, difficulty: difficulty, role: role, results: results });
+            sessionId = saved.session_id;
+        } catch (error) { console.warn("Could not save session:", error.message); }
+
+        renderResults(results, sessionId);
+    }
+
+    function scoreColor(score) {
+        if (score >= 8) return "text-success";
+        if (score >= 5) return "text-warning";
+        return "text-danger";
+    }
+
+    function fmtTime(s) { return Math.floor(s / 60) + "m " + (s % 60) + "s"; }
+
+    function renderResults(results, sessionId) {
+        const body = $("resultsBody");
+        body.replaceChildren();
+
+        const scored = results.filter(r => typeof r.score === "number");
+        const average = scored.length ? scored.reduce((sum, r) => sum + r.score, 0) / scored.length : null;
+        const totalTime = results.reduce((sum, r) => sum + (r.time_sec || 0), 0);
+        const fillers = results.reduce((sum, r) => sum + ((r.feedback && r.feedback.fillers) || 0), 0);
+        const offlineUsed = results.some(r => r.feedback && r.feedback.source === "offline");
+
+        const summary = el("div", "text-center mb-4");
+        summary.appendChild(el("h4", "fw-bold", "🎉 Interview Completed!"));
+        const big = el("div", "score-badge " + (average === null ? "" : scoreColor(average)),
+                       average === null ? "–" : average.toFixed(1) + " / 10");
+        big.style.fontSize = "44px";
+        summary.appendChild(big);
+        summary.appendChild(el("div", "text-muted",
+            scored.length + " of " + results.length + " answers evaluated · total time " + fmtTime(totalTime) +
+            " · " + fillers + " filler word" + (fillers === 1 ? "" : "s")));
+        if (offlineUsed) {
+            summary.appendChild(el("div", "badge text-bg-secondary mt-2",
+                "Some answers were scored by the offline rule-based evaluator"));
+        }
+        body.appendChild(summary);
+
+        results.forEach((r, index) => {
+            const card = el("div", "result-item");
+            const top = el("div", "d-flex justify-content-between align-items-start gap-3 mb-2");
+            const title = el("div");
+            title.appendChild(el("div", "question-number", "Question " + (index + 1) + " · " + fmtTime(r.time_sec || 0)));
+            title.appendChild(el("div", "fw-bold", r.question));
+            top.appendChild(title);
+            top.appendChild(el("div", "score-badge " + (typeof r.score === "number" ? scoreColor(r.score) : "text-muted"),
+                               typeof r.score === "number" ? r.score + "/10" : "–"));
+            card.appendChild(top);
+
+            const yours = el("div", "mb-3 text-muted small");
+            yours.appendChild(el("strong", "", "Your answer: "));
+            yours.appendChild(document.createTextNode(r.answer));
+            card.appendChild(yours);
+
+            if (r.error) {
+                card.appendChild(el("div", "alert alert-warning mb-0", "Could not evaluate this answer: " + r.error));
+            } else {
+                const fb = r.feedback;
+                if (fb.strengths && fb.strengths.length) card.appendChild(listBlock("What was good", fb.strengths, "✅"));
+                if (fb.improvements && fb.improvements.length) card.appendChild(listBlock("What to improve", fb.improvements, "🔧"));
+                if (fb.sample_answer) {
+                    const sample = el("div", "sample-answer mt-3");
+                    sample.appendChild(el("strong", "", "💡 Better sample answer: "));
+                    sample.appendChild(document.createTextNode(fb.sample_answer));
+                    card.appendChild(sample);
+                }
+            }
+            body.appendChild(card);
+        });
+
+        const actions = el("div", "d-flex flex-wrap gap-2 justify-content-center mt-4");
+        const again = el("button", "btn btn-primary btn-custom", "Practice Again");
+        again.addEventListener("click", () => showOnly("setupPanel"));
+        actions.appendChild(again);
+        if (sessionId) {
+            const pdf = el("a", "btn btn-outline-success btn-custom", "⬇ Download PDF report");
+            pdf.href = "/history/" + sessionId + "/report.pdf";
+            actions.appendChild(pdf);
+        }
+        const history = el("a", "btn btn-outline-primary btn-custom", "View History");
+        history.href = "{{ url_for('history') }}";
+        actions.appendChild(history);
+        body.appendChild(actions);
+
+        $("evalStatus").style.display = "none";
+        body.style.display = "block";
+    }
+</script>
+{% endblock %}
